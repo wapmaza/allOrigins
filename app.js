@@ -11,6 +11,8 @@ const { version } = require('./package.json')
 global.AO_VERSION = version
 
 const processRequest = require('./app/process-request')
+console.log("processRequest");
+console.log(processRequest);
 
 function enableCORS(req, res, next) {
   res.header('Access-Control-Allow-Origin', req.headers.origin || '*')
