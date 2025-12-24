@@ -38,7 +38,8 @@ module.exports = (function app() {
   app.enable("trust proxy")
   app.use(enableCORS)
 
-  app.all('/:format(get|raw|json|info)', processRequest)
+  // accept optional device segment, e.g. /raw/mobile to request with mobile UA
+  app.all('/:format(get|raw|json|info)/:device?', processRequest)
 
   return app
 })()

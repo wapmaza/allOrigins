@@ -1,20 +1,20 @@
-const { got } = require('./http-client')
+const httpClient = require('./http-client')
 const iconv = require('iconv-lite')
 
 module.exports = getPage
 
-function getPage({ url, format, requestMethod, charset }) {
+function getPage({ url, format, requestMethod, charset, device }) {
   if (format === 'info' || requestMethod === 'HEAD') {
-    return getPageInfo(url)
+    return getPageInfo(url, device)
   } else if (format === 'raw') {
-    return getRawPage(url, requestMethod, charset)
+    return getRawPage(url, requestMethod, charset, device)
   }
 
-  return getPageContents(url, requestMethod, charset)
+  return getPageContents(url, requestMethod, charset, device)
 }
 
-async function getPageInfo(url) {
-  const { response, error } = await request(url, 'HEAD')
+async function getPageInfo(url, device) {
+  const { response, error } = await request(url, 'HEAD', false, null, device)
   if (error) return processError(error)
 
   return {
@@ -25,12 +25,13 @@ async function getPageInfo(url) {
   }
 }
 
-async function getRawPage(url, requestMethod, charset) {
+async function getRawPage(url, requestMethod, charset, device) {
   const { content, response, error } = await request(
     url,
     requestMethod,
     true,
-    charset
+    charset,
+    device
   )
   if (error) return processError(error)
 
@@ -42,12 +43,13 @@ async function getRawPage(url, requestMethod, charset) {
   }
 }
 
-async function getPageContents(url, requestMethod, charset) {
+async function getPageContents(url, requestMethod, charset, device) {
   const { content, response, error } = await request(
     url,
     requestMethod,
     false,
-    charset
+    charset,
+    device
   )
   if (error) return processError(error)
 
@@ -63,14 +65,20 @@ async function getPageContents(url, requestMethod, charset) {
   }
 }
 
-async function request(url, requestMethod, raw = false, charset = null) {
+async function request(url, requestMethod, raw = false, charset = null, device = null) {
   try {
     const options = {
       method: requestMethod,
       decompress: !raw,
     }
 
-    const response = await got(url, options)
+    // create a got instance for the requested device (e.g. 'mobile') if available
+    let http = httpClient && httpClient.got
+    if (httpClient && httpClient.createGotInstance) {
+      http = httpClient.createGotInstance(device).got
+    }
+
+    const response = await http(url, options)
     if (options.method === 'HEAD') return { response }
 
     return processContent(response, charset)

@@ -4,7 +4,7 @@ const got = require('got')
 
 const DEFAULT_USER_AGENT = `Mozilla/5.0 (compatible; allOrigins/${global.AO_VERSION}; +http://allorigins.win/)`
 
-module.exports = (function defaultGot() {
+function createGotInstance(device) {
   const gotOptions = {
     agent: {
       http: new HttpAgent({
@@ -37,7 +37,17 @@ module.exports = (function defaultGot() {
     },
   ]
 
-  const gotInstance = got.extend(gotOptions)
+  if (device === 'mobile') {
+    // a common mobile UA string
+    gotOptions.headers['user-agent'] =
+      process.env.MOBILE_USER_AGENT ||
+      'Mozilla/5.0 (Linux; Android 10; SM-G970F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Mobile Safari/537.36'
+  }
 
+  const gotInstance = got.extend(gotOptions)
   return { got: gotInstance }
-})()
+}
+
+// export default instance for code that doesn't care about device
+module.exports = createGotInstance()
+module.exports.createGotInstance = createGotInstance
