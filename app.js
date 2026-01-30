@@ -4,6 +4,7 @@
  * http://github.com/gnuns
  */
 const express = require('express')
+const puppeteer = require('puppeteer')
 
 const { version } = require('./package.json')
 // yep, global. it's ok
@@ -40,6 +41,34 @@ module.exports = (function app() {
 
   // accept optional device segment, e.g. /raw/mobile to request with mobile UA
   app.all('/:format(get|raw|json|info)/:device?', processRequest)
+
+  // Puppeteer route
+  app.get('/raw/pup', async (req, res) => {
+    try {
+      const url = req.query.url
+      if (!url) {
+        return res.status(400).json({ error: 'URL parameter is required' })
+      }
+
+      const browser = await puppeteer.launch()
+      const page = await browser.newPage()
+      
+      // Set a User-Agent to look like a real browser
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+
+      await page.goto(url, { waitUntil: 'networkidle2' })
+
+      const content = await page.content()
+      console.log("Page Loaded")
+      
+      await browser.close()
+      
+      res.json({ content })
+    } catch (error) {
+      console.error('Error:', error)
+      res.status(500).json({ error: 'Failed to fetch page' })
+    }
+  })
 
   return app
 })()
