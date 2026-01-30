@@ -5,7 +5,13 @@
  */
 
 const app = require('./app.js')
-const port = process.env.PORT || 3000
 
-console.log(`Starting allOrigins v${global.AO_VERSION}`)
-app.listen(port, () => console.log('Listening on', port))
+// For Vercel serverless functions, we need to export the handler
+module.exports = app
+
+// For local development, start the server
+if (require.main === module) {
+  const port = process.env.PORT || 3000
+  console.log(`Starting allOrigins v${global.AO_VERSION}`)
+  app.listen(port, () => console.log('Listening on', port))
+}
